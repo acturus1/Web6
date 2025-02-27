@@ -55,19 +55,43 @@ class Window(QWidget):
 
     def zoom_in(self):
         if self.mp.spn < 19:
-            self.mp.spn += 0.1
+            self.mp.spn += 0.0001
             self.load_map()
 
     def zoom_out(self):
-        if self.mp.spn != 0:
-            self.mp.spn -= 0.1
+        if self.mp.spn > 0.0001:
+            self.mp.spn -= 0.0001
             self.load_map()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_PageUp:
-            self.zoom_in()
-        elif event.key() == Qt.Key_PageDown:
-            self.zoom_out()
+        if event.key() == Qt.Key_S:
+            self.move_up()
+        elif event.key() == Qt.Key_W:
+            self.move_down()
+        elif event.key() == Qt.Key_A:
+            self.move_left()
+        elif event.key() == Qt.Key_D:
+            self.move_right()
+
+    def move_up(self):
+        spn = self.mp.spn
+        self.mp.lat = max(-90, self.mp.lat - spn)
+        self.load_map()
+
+    def move_down(self):
+        spn = self.mp.spn
+        self.mp.lat = min(90, self.mp.lat + spn)
+        self.load_map()
+
+    def move_left(self):
+        spn = self.mp.spn
+        self.mp.lon = max(-180, self.mp.lon - spn)
+        self.load_map()
+
+    def move_right(self):
+        spn = self.mp.spn
+        self.mp.lon = min(180, self.mp.lon + spn)
+        self.load_map()
 
 def main():
     app = QApplication(sys.argv)
