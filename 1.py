@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QComboBox, QLineEdit, QHBoxLayout, QTextEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QComboBox, QLineEdit, QHBoxLayout, QTextEdit, QCheckBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -15,6 +15,7 @@ class MapParams:
         self.marker_lat = None
         self.marker_lon = None
         self.address = ""
+        self.add_postcode = False
 
     def ll(self):
         return str(self.lon) + "," + str(self.lat)
@@ -68,6 +69,10 @@ class Window(QWidget):
         reset_button = QPushButton('Сброс поискового результата')
         reset_button.clicked.connect(self.reset_search_result)
         search_layout.addWidget(reset_button)
+
+        postcode_checkbox = QCheckBox('Добавлять почтовый индекс')
+        postcode_checkbox.stateChanged.connect(self.toggle_postcode)
+        search_layout.addWidget(postcode_checkbox)
 
         self.address_label = QTextEdit()
         self.address_label.setReadOnly(True)
@@ -153,7 +158,15 @@ class Window(QWidget):
                     self.mp.lon = float(toponym["Point"]["pos"].split()[0])
                     self.mp.marker_lat = self.mp.lat
                     self.mp.marker_lon = self.mp.lon
-                    self.mp.address = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+                    address = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+                    if self.mp.add_postcode:
+                        self.mp.address = address
+                    else:
+                        parts = address.split(', ')
+                        if len(parts) > 2:
+                            self.mp.address = ', '.join(parts[:-1])
+                        else:
+                            self.mp.address = address
                     self.address_label.setText(self.mp.address)
                     self.load_map()
                 except IndexError:
@@ -165,6 +178,34 @@ class Window(QWidget):
         self.mp.address = ""
         self.address_label.setText("")
         self.load_map()
+
+    def toggle_postcode(self, state):
+        self.mp.add_postcode = state == Qt.Checked
+        if self.mp.address:
+            geocoder_api_server = "https://geocode-maps.yandex.ru/1.x/"
+            geocoder_params = {
+                "format": "json",
+                "apikey": self.mp.api2,
+                "geocode": self.mp.address
+            }
+            response = requests.get(geocoder_api_server, params=geocoder_params)
+            print(response.url)
+            if response:
+                json_response = response.json()
+                try:
+                    toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                    address = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+                    if self.mp.add_postcode:
+                        self.mp.address = address
+                    else:
+                        parts = address.split(', ')
+                        if len(parts) > 2:
+                            self.mp.address = ', '.join(parts[:-1])
+                        else:
+                            self.mp.address = address
+                    self.address_label.setText(self.mp.address)
+                except IndexError:
+                    print("Объект не найден")
 
 def main():
     app = QApplication(sys.argv)
