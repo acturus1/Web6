@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QComboBox, QLineEdit, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QComboBox, QLineEdit, QHBoxLayout, QTextEdit
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -14,6 +14,7 @@ class MapParams:
         self.api2 = '8013b162-6b42-4997-9691-77b7074026e0'
         self.marker_lat = None
         self.marker_lon = None
+        self.address = ""
 
     def ll(self):
         return str(self.lon) + "," + str(self.lat)
@@ -26,7 +27,7 @@ class Window(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(100, 100, 600, 450)
+        self.setGeometry(100, 100, 600, 550)
         self.setWindowTitle('Карта')
 
         layout = QVBoxLayout()
@@ -67,6 +68,10 @@ class Window(QWidget):
         reset_button = QPushButton('Сброс поискового результата')
         reset_button.clicked.connect(self.reset_search_result)
         search_layout.addWidget(reset_button)
+
+        self.address_label = QTextEdit()
+        self.address_label.setReadOnly(True)
+        layout.addWidget(self.address_label)
 
         self.load_map()
 
@@ -148,6 +153,8 @@ class Window(QWidget):
                     self.mp.lon = float(toponym["Point"]["pos"].split()[0])
                     self.mp.marker_lat = self.mp.lat
                     self.mp.marker_lon = self.mp.lon
+                    self.mp.address = toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+                    self.address_label.setText(self.mp.address)
                     self.load_map()
                 except IndexError:
                     print("Объект не найден")
@@ -155,6 +162,8 @@ class Window(QWidget):
     def reset_search_result(self):
         self.mp.marker_lat = None
         self.mp.marker_lon = None
+        self.mp.address = ""
+        self.address_label.setText("")
         self.load_map()
 
 def main():
