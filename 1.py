@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QComboBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -9,6 +9,8 @@ class MapParams:
         self.lat = 61.665279
         self.lon = 50.813492
         self.spn = 0.0005
+        self.theme = 'dark'
+        self.api = 'f3a0fe3a-b07e-4840-a1da-06f18b2ddf13'
 
     def ll(self):
         return str(self.lon) + "," + str(self.lat)
@@ -41,10 +43,17 @@ class Window(QWidget):
         zoom_out_button.clicked.connect(self.zoom_out)
         buttons_layout.addWidget(zoom_out_button)
 
+        themes = QComboBox()
+        themes.addItem("Светлая")
+        themes.addItem("Тёмная")
+
+        themes.currentTextChanged.connect(self.change_theme)
+        buttons_layout.addWidget(themes)
+
         self.load_map()
 
     def load_map(self):
-        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.mp.ll()}&spn={self.mp.spn},{self.mp.spn}&l=map"
+        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.mp.ll()}&theme={self.mp.theme}&spn={self.mp.spn},{self.mp.spn}&l=map&apikey={self.mp.api}"
         response = requests.get(map_request)
         if response.status_code == 200:
             with open("map.png", "wb") as file:
@@ -91,6 +100,13 @@ class Window(QWidget):
     def move_right(self):
         spn = self.mp.spn
         self.mp.lon = min(180, self.mp.lon + spn)
+        self.load_map()
+    
+    def change_theme(self, text):
+        if text == "Светлая":
+            self.mp.theme = "light"
+        elif text == 'Тёмная':
+            self.mp.theme = "dark"
         self.load_map()
 
 def main():
