@@ -6,9 +6,9 @@ import requests
 
 class MapParams:
     def __init__(self):
-        self.lat = 11
-        self.lon = 20
-        self.snp = 16
+        self.lat = 61.665279
+        self.lon = 50.813492
+        self.snp = 0.2
 
     def ll(self):
         return str(self.lon) + "," + str(self.lat)
@@ -33,7 +33,7 @@ class Window(QWidget):
         self.load_map()
 
     def load_map(self):
-        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.mp.ll()}&z={self.mp.snp}&l=map"
+        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.mp.ll()}&spn={self.mp.snp},{self.mp.snp}&l=map"
         response = requests.get(map_request)
         if response.status_code == 200:
             with open("map.png", "wb") as file:
