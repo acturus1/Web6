@@ -8,7 +8,7 @@ class MapParams:
     def __init__(self):
         self.lat = 61.665279
         self.lon = 50.813492
-        self.snp = 0.2
+        self.spn = 0.0005
 
     def ll(self):
         return str(self.lon) + "," + str(self.lat)
@@ -22,7 +22,7 @@ class Window(QWidget):
 
     def initUI(self):
         self.setGeometry(100, 100, 600, 450)
-        self.setWindowTitle('...')
+        self.setWindowTitle('Карта')
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -30,10 +30,21 @@ class Window(QWidget):
         self.map_label = QLabel()
         layout.addWidget(self.map_label)
 
+        buttons_layout = QVBoxLayout()
+        layout.addLayout(buttons_layout)
+
+        zoom_in_button = QPushButton('Уменьшить масштаб')
+        zoom_in_button.clicked.connect(self.zoom_in)
+        buttons_layout.addWidget(zoom_in_button)
+
+        zoom_out_button = QPushButton('Увеличить масштаб')
+        zoom_out_button.clicked.connect(self.zoom_out)
+        buttons_layout.addWidget(zoom_out_button)
+
         self.load_map()
 
     def load_map(self):
-        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.mp.ll()}&spn={self.mp.snp},{self.mp.snp}&l=map"
+        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.mp.ll()}&spn={self.mp.spn},{self.mp.spn}&l=map"
         response = requests.get(map_request)
         if response.status_code == 200:
             with open("map.png", "wb") as file:
@@ -41,6 +52,22 @@ class Window(QWidget):
 
             pixmap = QPixmap("map.png")
             self.map_label.setPixmap(pixmap.scaled(600, 400, Qt.KeepAspectRatio))
+
+    def zoom_in(self):
+        if self.mp.spn < 19:
+            self.mp.spn += 0.1
+            self.load_map()
+
+    def zoom_out(self):
+        if self.mp.spn != 0:
+            self.mp.spn -= 0.1
+            self.load_map()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_PageUp:
+            self.zoom_in()
+        elif event.key() == Qt.Key_PageDown:
+            self.zoom_out()
 
 def main():
     app = QApplication(sys.argv)
